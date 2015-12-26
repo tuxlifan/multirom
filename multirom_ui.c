@@ -22,6 +22,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "lib/framebuffer.h"
 #include "lib/input.h"

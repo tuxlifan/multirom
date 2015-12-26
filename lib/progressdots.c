@@ -15,6 +15,7 @@
  * along with MultiROM.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "progressdots.h"

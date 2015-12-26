@@ -17,6 +17,9 @@
 #ifndef _INIT_UTIL_H_
 #define _INIT_UTIL_H_
 
+#include <string.h> /* FIXME: kludge to get most stuff building */
+#include <stdlib.h>
+
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/time.h>

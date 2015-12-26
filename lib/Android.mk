@@ -98,16 +98,18 @@ LOCAL_ARM_MODE := arm
 LOCAL_SRC_FILES:= \
     src/base/ftbbox.c \
     src/base/ftbitmap.c \
+    src/base/ftfntfmt.c \
     src/base/ftfstype.c \
     src/base/ftglyph.c \
     src/base/ftlcdfil.c \
     src/base/ftstroke.c \
     src/base/fttype1.c \
-    src/base/ftxf86.c \
     src/base/ftbase.c \
     src/base/ftsystem.c \
     src/base/ftinit.c \
     src/base/ftgasp.c \
+    src/base/ftmm.c \
+    src/gzip/ftgzip.c \
     src/raster/raster.c \
     src/sfnt/sfnt.c \
     src/smooth/smooth.c \
@@ -117,12 +119,7 @@ LOCAL_SRC_FILES:= \
     src/psnames/psnames.c \
     src/pshinter/pshinter.c
 
-ifeq ($(shell if [ -e "$(ANDROID_BUILD_TOP)/external/freetype/src/gzip/ftgzip.c" ]; then echo "hasgzip"; fi),hasgzip)
-LOCAL_SRC_FILES += src/gzip/ftgzip.c
-endif
-
 LOCAL_C_INCLUDES += \
-    $(LOCAL_PATH)/builds \
     $(LOCAL_PATH)/include \
     external/libpng \
     external/zlib
@@ -132,7 +129,7 @@ LOCAL_CFLAGS += -fPIC -DPIC
 LOCAL_CFLAGS += "-DDARWIN_NO_CARBON"
 LOCAL_CFLAGS += "-DFT2_BUILD_LIBRARY"
 
-LOCAL_STATIC_LIBRARIES += libpng libz
+LOCAL_SHARED_LIBRARIES += libpng libz
 
 # the following is for testing only, and should not be used in final builds
 # of the product
