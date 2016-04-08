@@ -80,7 +80,7 @@ $(MULTIROM_ZIP_TARGET): multirom trampoline bbootimg mrom_kexec_static mrom_adbd
 	rm -f $(MULTIROM_ZIP_TARGET).zip $(MULTIROM_ZIP_TARGET)-unsigned.zip
 	cd $(MULTIROM_INST_DIR) && zip -qr ../$(notdir $@)-unsigned.zip *
 	java -jar $(multirom_local_path)/signapk/signapk.jar -w $(multirom_local_path)/signapk/jollaman999.x509.pem $(multirom_local_path)/signapk/jollaman999.pk8 $(MULTIROM_ZIP_TARGET)-unsigned.zip $(MULTIROM_ZIP_TARGET).zip
-	$(install_zip_path)/rename_zip.sh $(MULTIROM_ZIP_TARGET) $(TARGET_DEVICE) $(PWD)/$(multirom_local_path)/version.h
+	$(install_zip_path)/rename_zip.sh $(MULTIROM_ZIP_TARGET) $(TARGET_DEVICE) $(PWD)/$(multirom_local_path)/version.h $(MR_DEVICE_SPECIFIC_VERSION)
 	@echo ----- Made MultiROM ZIP installer -------- $@.zip
 
 .PHONY: multirom_zip
