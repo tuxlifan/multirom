@@ -118,15 +118,8 @@ static void pw_ui_auto_boot_hidden(UNUSED void *data)
 
 static void pw_ui_auto_boot_now(void *data)
 {
-    pw_ui_auto_boot_hidden(data);
-
-    // We need to run quirks for primary ROM to prevent
-    // restorecon breaking everything
-    rom_quirks_on_initrd_finalized();
-
-    pthread_mutex_lock(&exit_code_mutex);
-    exit_code = ENCMNT_UIRES_BOOT_INTERNAL;
-    pthread_mutex_unlock(&exit_code_mutex);
+    pw_ui_auto_boot_hidden(NULL);
+    boot_internal_clicked(NULL);
 }
 
 static void pw_ui_auto_boot_tick(UNUSED void *data)
@@ -146,13 +139,7 @@ static void pw_ui_auto_boot_tick(UNUSED void *data)
         pw_ui_destroy_auto_boot_data();
         pthread_mutex_unlock(&auto_boot_data.mutex);
 
-        // We need to run quirks for primary ROM to prevent
-        // restorecon breaking everything
-        rom_quirks_on_initrd_finalized();
-
-        pthread_mutex_lock(&exit_code_mutex);
-        exit_code = ENCMNT_UIRES_BOOT_INTERNAL;
-        pthread_mutex_unlock(&exit_code_mutex);
+        boot_internal_clicked(NULL);
     }
     else
     {
