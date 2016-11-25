@@ -355,7 +355,7 @@ static inline void type_pattern_connect_dot(struct pwui_type_pattern_data *d,  i
     d->connected_dots[d->connected_dots_len++] = dot_idx;
 
     fb_circle *c = d->dots[dot_idx];
-    c = fb_add_circle_lvl(100, c->x+PWUI_DOT_ACTIVE_OFF, c->y+PWUI_DOT_ACTIVE_OFF, PWUI_DOT_ACTIVE_R, C_HIGHLIGHT_TEXT);
+    c = fb_add_circle_lvl(100, c->x+PWUI_DOT_ACTIVE_OFF, c->y+PWUI_DOT_ACTIVE_OFF, PWUI_DOT_ACTIVE_R, C_HIGHLIGHT_BG);
     list_add(&d->active_dots, c);
 }
 
@@ -375,7 +375,7 @@ static int type_pattern_touch_handler(touch_event *ev, void *data)
         type_pattern_connect_dot(d, dot_idx);
 
         fb_circle *c = d->dots[dot_idx];
-        d->cur_line = fb_add_line(c->x + PWUI_DOT_R, c->y + PWUI_DOT_R, ev->x, ev->y, PWUI_LINE_W, C_HIGHLIGHT_BG);
+        d->cur_line = fb_add_line(c->x + PWUI_DOT_R, c->y + PWUI_DOT_R, ev->x, ev->y, PWUI_LINE_W, C_HIGHLIGHT_TEXT);
         fb_request_draw();
         return 0;
     }
@@ -392,7 +392,7 @@ static int type_pattern_touch_handler(touch_event *ev, void *data)
             d->cur_line->x2 = c->x + PWUI_DOT_R;
             d->cur_line->y2 = c->y + PWUI_DOT_R;
             list_add(&d->complete_lines, d->cur_line);
-            d->cur_line = fb_add_line(c->x + PWUI_DOT_R, c->y + PWUI_DOT_R, ev->x, ev->y, PWUI_LINE_W, C_HIGHLIGHT_BG);
+            d->cur_line = fb_add_line(c->x + PWUI_DOT_R, c->y + PWUI_DOT_R, ev->x, ev->y, PWUI_LINE_W, C_HIGHLIGHT_TEXT);
 
             const int last_dot = d->connected_dots[d->connected_dots_len-1];
             int dot_mid = -1;
@@ -461,7 +461,7 @@ static void type_pattern_init(void)
     {
         for(cx = 0; cx < 3; ++cx)
         {
-            fb_circle *c = fb_add_circle(x, y, PWUI_DOT_R, C_HIGHLIGHT_BG);
+            fb_circle *c = fb_add_circle(x, y, PWUI_DOT_R, C_HIGHLIGHT_TEXT);
             list_add(&d->dots, c);
 
             x += step;
