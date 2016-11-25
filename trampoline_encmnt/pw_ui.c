@@ -43,6 +43,8 @@
 #define PWUI_LINE_W (12*DPI_MUL)
 #define PWUI_DOTS_CNT 9
 
+#define AUTO_BOOT_SECONDS 5
+
 struct pwui_type_pass_data {
     fb_text *passwd_text;
     fb_rect *cursor_rect;
@@ -60,6 +62,19 @@ struct pwui_type_pattern_data {
     int connected_dots[PWUI_DOTS_CNT];
     size_t connected_dots_len;
     int touch_id;
+};
+
+static struct auto_boot_data
+{
+    ncard_builder *b;
+    int seconds;
+    int destroy;
+    pthread_mutex_t mutex;
+} auto_boot_data = {
+    .b = NULL,
+    .seconds = 0,
+    .destroy = 0,
+    .mutex = PTHREAD_MUTEX_INITIALIZER,
 };
 
 static pthread_mutex_t exit_code_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -82,6 +97,95 @@ static void boot_internal_clicked(UNUSED void *data)
     pthread_mutex_lock(&exit_code_mutex);
     exit_code = ENCMNT_UIRES_BOOT_INTERNAL;
     pthread_mutex_unlock(&exit_code_mutex);
+}
+
+static void pw_ui_destroy_auto_boot_data(void)
+{
+    if(auto_boot_data.b)
+    {
+        ncard_destroy_builder(auto_boot_data.b);
+        auto_boot_data.b = NULL;
+    }
+    auto_boot_data.destroy = 1;
+}
+
+static void pw_ui_auto_boot_hidden(UNUSED void *data)
+{
+    pthread_mutex_lock(&auto_boot_data.mutex);
+    pw_ui_destroy_auto_boot_data();
+    pthread_mutex_unlock(&auto_boot_data.mutex);
+}
+
+static void pw_ui_auto_boot_now(void *data)
+{
+    pw_ui_auto_boot_hidden(data);
+
+    // We need to run quirks for primary ROM to prevent
+    // restorecon breaking everything
+    rom_quirks_on_initrd_finalized();
+
+    pthread_mutex_lock(&exit_code_mutex);
+    exit_code = ENCMNT_UIRES_BOOT_INTERNAL;
+    pthread_mutex_unlock(&exit_code_mutex);
+}
+
+static void pw_ui_auto_boot_tick(UNUSED void *data)
+{
+    char buff[128];
+
+    pthread_mutex_lock(&auto_boot_data.mutex);
+
+    if(auto_boot_data.destroy)
+    {
+        pthread_mutex_unlock(&auto_boot_data.mutex);
+        return;
+    }
+
+    if(--auto_boot_data.seconds == 0)
+    {
+        pw_ui_destroy_auto_boot_data();
+        pthread_mutex_unlock(&auto_boot_data.mutex);
+
+        // We need to run quirks for primary ROM to prevent
+        // restorecon breaking everything
+        rom_quirks_on_initrd_finalized();
+
+        pthread_mutex_lock(&exit_code_mutex);
+        exit_code = ENCMNT_UIRES_BOOT_INTERNAL;
+        pthread_mutex_unlock(&exit_code_mutex);
+    }
+    else
+    {
+        call_anim *a = call_anim_create(NULL, NULL, 1000, INTERPOLATOR_LINEAR);
+        a->duration = 1000; // in call_anim_create, duration is multiplied by coef - we don't want that here
+        a->on_finished_call = pw_ui_auto_boot_tick;
+        call_anim_add(a);
+
+        snprintf(buff, sizeof(buff), "\nBooting primary ROM in %d second%s.",
+            auto_boot_data.seconds, auto_boot_data.seconds != 1 ? "s" : "");
+        ncard_set_text(auto_boot_data.b, buff);
+        ncard_show(auto_boot_data.b, 0);
+    }
+
+    pthread_mutex_unlock(&auto_boot_data.mutex);
+}
+
+void pw_ui_auto_boot_internal(void)
+{
+    ncard_builder *b = ncard_create_builder();
+    auto_boot_data.b = b;
+    auto_boot_data.seconds = AUTO_BOOT_SECONDS + 1;
+    auto_boot_data.destroy = 0;
+
+    ncard_set_pos(b, NCARD_POS_CENTER);
+    ncard_set_cancelable(b, 1);
+    ncard_set_title(b, "Auto-boot");
+    ncard_add_btn(b, BTN_NEGATIVE, "Cancel", ncard_hide_callback, NULL);
+    ncard_add_btn(b, BTN_POSITIVE, "Boot now", pw_ui_auto_boot_now, NULL);
+    ncard_set_on_hidden(b, pw_ui_auto_boot_hidden, NULL);
+    ncard_set_from_black(b, 1);
+
+    pw_ui_auto_boot_tick(NULL);
 }
 
 static void fade_rect_alpha_step(void *data, float interpolated)
@@ -428,6 +532,8 @@ static void init_ui(int pwtype)
             center_text(t, 0, 0, fb_width, fb_height);
             break;
     }
+
+    pw_ui_auto_boot_internal();
 }
 
 static void destroy_ui(int pwtype)
