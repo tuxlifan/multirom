@@ -294,7 +294,7 @@ void fb_png_drop_unused(void)
     }
 }
 
-static inline void convert_fb_px_to_rgb888(px_type src, uint8_t *dest)
+static void convert_fb_px_to_rgb888(px_type src, uint8_t *dest)
 {
     dest[0] = PX_GET_R(src);
     dest[1] = PX_GET_G(src);

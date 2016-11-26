@@ -81,10 +81,10 @@ static volatile int fb_draw_run = 0;
 static void *fb_draw_thread_work(void*);
 
 static void fb_destroy_item(void *item); // private!
-static inline void fb_cpy_fb_with_rotation(px_type *dst, px_type *src);
-static inline void fb_rotate_90deg(px_type *dst, px_type *src);
-static inline void fb_rotate_270deg(px_type *dst, px_type *src);
-static inline void fb_rotate_180deg(px_type *dst, px_type *src);
+static void fb_cpy_fb_with_rotation(px_type *dst, px_type *src);
+static void fb_rotate_90deg(px_type *dst, px_type *src);
+static void fb_rotate_270deg(px_type *dst, px_type *src);
+static void fb_rotate_180deg(px_type *dst, px_type *src);
 
 int fb_open_impl(void)
 {
@@ -563,7 +563,7 @@ void fb_destroy_item(void *item)
     free(item);
 }
 
-static inline void clamp_to_parent(void *it, int *min_x, int *max_x, int *min_y, int *max_y)
+static void clamp_to_parent(void *it, int *min_x, int *max_x, int *min_y, int *max_y)
 {
     fb_item_header *h = it;
 
@@ -671,7 +671,7 @@ void fb_draw_rect(fb_rect *r)
     }
 }
 
-static inline int blend_png(int value1, int value2, int alpha) {
+static int blend_png(int value1, int value2, int alpha) {
     int r = (0xFF-alpha)*value1 + alpha*value2;
     return (r+1 + (r >> 8)) >> 8; // divide by 255
 }
@@ -1091,7 +1091,7 @@ void *fb_draw_thread_work(UNUSED void *cookie)
         clock_gettime(CLOCK_MONOTONIC, &curr);
         diff = timespec_diff(&last, &curr);
 
-        expected.__val = 1; // might be reseted by atomic_compare_exchange_strong
+        expected = 1; // might be reseted by atomic_compare_exchange_strong
         pthread_mutex_lock(&fb_draw_mutex);
         if(atomic_compare_exchange_strong(&fb_draw_requested, &expected, 0))
         {

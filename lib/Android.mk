@@ -22,7 +22,8 @@ common_SRC_FILES := \
     util.c \
     workers.c \
 
-common_C_INCLUDES := $(multirom_local_path)/lib \
+common_C_INCLUDES := \
+    $(LOCAL_PATH)/lib \
     external/libpng \
     external/zlib \
     external/freetype/include \
@@ -76,6 +77,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libmultirom
 LOCAL_MODULE_TAGS := eng
 LOCAL_SHARED_LIBRARIES := libcutils libc libm libpng libz libft2
+LOCAL_STATIC_LIBRARIES := libbootimg
 LOCAL_CFLAGS += $(common_C_FLAGS)
 LOCAL_SRC_FILES := $(common_SRC_FILES)
 LOCAL_C_INCLUDES += $(common_C_INCLUDES)

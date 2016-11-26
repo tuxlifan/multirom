@@ -126,7 +126,7 @@ static float anim_interpolate(int type, float input)
     }
 }
 
-static inline void anim_int_step(int *prop, int *start, int *last, int *target, float interpolated)
+static void anim_int_step(int *prop, int *start, int *last, int *target, float interpolated)
 {
     if(*target != -1)
     {
@@ -137,7 +137,7 @@ static inline void anim_int_step(int *prop, int *start, int *last, int *target, 
     }
 }
 
-static inline int item_anim_is_on_screen(item_anim *anim)
+static int item_anim_is_on_screen(item_anim *anim)
 {
     fb_item_header *it = anim->item;
     return it->x + it->w > 0 && it->x < (int)fb_width &&
