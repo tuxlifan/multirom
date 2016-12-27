@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "pw_ui.h"
 #include "encmnt_defines.h"
@@ -41,7 +42,7 @@
 #define PWUI_DOT_ACTIVE_R (PWUI_DOT_R/2)
 #define PWUI_DOT_ACTIVE_OFF (PWUI_DOT_R - PWUI_DOT_ACTIVE_R)
 #define PWUI_LINE_W (12*DPI_MUL)
-#define PWUI_DOTS_CNT 9
+#define PWUI_DOTS_CNT_MAX 36
 
 #define AUTO_BOOT_SECONDS 5
 
@@ -59,7 +60,7 @@ struct pwui_type_pattern_data {
     fb_circle **active_dots;
     fb_line **complete_lines;
     fb_line *cur_line;
-    int connected_dots[PWUI_DOTS_CNT];
+    int connected_dots[PWUI_DOTS_CNT_MAX];
     size_t connected_dots_len;
     int touch_id;
 };
@@ -82,6 +83,14 @@ static int exit_code = ENCMNT_UIRES_ERROR;
 static void *pwui_type_data = NULL;
 static fb_text *invalid_pass_text = NULL;
 static button *boot_primary_btn = NULL;
+
+static size_t pattern_size;
+static button *pattern_size3_btn = NULL;
+static button *pattern_size4_btn = NULL;
+static button *pattern_size5_btn = NULL;
+static button *pattern_size6_btn = NULL;
+static void type_pattern_init(size_t size);
+static void type_pattern_destroy(void);
 
 static void boot_internal_clicked(UNUSED void *data)
 {
@@ -116,7 +125,7 @@ static void pw_ui_auto_boot_hidden(UNUSED void *data)
     pthread_mutex_unlock(&auto_boot_data.mutex);
 }
 
-static void pw_ui_auto_boot_now(void *data)
+static void pw_ui_auto_boot_now(UNUSED void *data)
 {
     pw_ui_auto_boot_hidden(NULL);
     boot_internal_clicked(NULL);
@@ -190,7 +199,7 @@ static void reveal_rect_alpha_step(void *data, float interpolated)
     fb_request_draw();
 }
 
-static int try_password(const char *pass)
+static int try_password(char *pass)
 {
     fb_text_set_content(invalid_pass_text, "");
 
@@ -333,9 +342,9 @@ static inline int type_pattern_dot_used(struct pwui_type_pattern_data *d, int do
 
 static inline void type_pattern_connect_dot(struct pwui_type_pattern_data *d,  int dot_idx)
 {
-    if(d->connected_dots_len >= PWUI_DOTS_CNT)
+    if(d->connected_dots_len >= pattern_size*pattern_size)
     {
-        ERROR("d->connected_dots_len overflowed PWUI_DOTS_CNT!\n");
+        ERROR("d->connected_dots_len overflowed!\n");
         return;
     }
 
@@ -357,6 +366,7 @@ static int type_pattern_touch_handler(touch_event *ev, void *data)
             return -1;
 
         d->touch_id = ev->id;
+        memset(d->connected_dots, 0, sizeof(d->connected_dots));
         d->connected_dots_len = 0;
 
         type_pattern_connect_dot(d, dot_idx);
@@ -380,7 +390,7 @@ static int type_pattern_touch_handler(touch_event *ev, void *data)
             d->cur_line->y2 = c->y + PWUI_DOT_R;
             list_add(&d->complete_lines, d->cur_line);
             d->cur_line = fb_add_line(c->x + PWUI_DOT_R, c->y + PWUI_DOT_R, ev->x, ev->y, PWUI_LINE_W, C_HIGHLIGHT_TEXT);
-
+#if 0
             const int last_dot = d->connected_dots[d->connected_dots_len-1];
             int dot_mid = -1;
             // The line is vertical and has crossed a point in the middle
@@ -398,6 +408,7 @@ static int type_pattern_touch_handler(touch_event *ev, void *data)
 
             if(dot_mid != -1 && !type_pattern_dot_used(d, dot_mid))
                 type_pattern_connect_dot(d, dot_mid);
+#endif
             type_pattern_connect_dot(d, dot_idx);
         }
         else
@@ -434,19 +445,132 @@ static int type_pattern_touch_handler(touch_event *ev, void *data)
     return 0;
 }
 
-static void type_pattern_init(void)
+static void type_pattern_size3_clicked(UNUSED void *data)
 {
-    struct pwui_type_pattern_data *d = mzalloc(sizeof(struct pwui_type_pattern_data));
-    int cx, cy;
+    if (pattern_size == 3)
+        return;
+    type_pattern_destroy();
+    type_pattern_init(3);
+}
 
-    const int start_x = fb_width*0.2;
-    const int step = (fb_width*0.6 - PWUI_DOT_R*2) / 2;
-    int x = start_x;
-    int y = fb_height/2 - fb_width/4;
+static void type_pattern_size4_clicked(UNUSED void *data)
+{
+    if (pattern_size == 4)
+        return;
+    type_pattern_destroy();
+    type_pattern_init(4);
+}
 
-    for(cy = 0; cy < 3; ++cy)
+static void type_pattern_size5_clicked(UNUSED void *data)
+{
+    if (pattern_size == 5)
+        return;
+    type_pattern_destroy();
+    type_pattern_init(5);
+}
+
+static void type_pattern_size6_clicked(UNUSED void *data)
+{
+    if (pattern_size == 6)
+        return;
+    type_pattern_destroy();
+    type_pattern_init(6);
+}
+
+static void type_pattern_buttons_init(void)
+{
+    int step;
+
+    pattern_size3_btn = mzalloc(sizeof(button));
+    pattern_size3_btn->w = fb_width*0.12;
+    pattern_size3_btn->h = HEADER_HEIGHT*0.7;
+    pattern_size3_btn->x = fb_width*0.13;
+    pattern_size3_btn->y = fb_height - (HEADER_HEIGHT * 2);
+    pattern_size3_btn->level_off = 101;
+    pattern_size3_btn->clicked = &type_pattern_size3_clicked;
+    button_init_ui(pattern_size3_btn, "3x3", SIZE_SMALL);
+
+    step = (fb_width - (pattern_size3_btn->x*2) - pattern_size3_btn->w*4)
+           / 3 + pattern_size3_btn->w;
+
+    pattern_size4_btn = mzalloc(sizeof(button));
+    pattern_size4_btn->w = pattern_size3_btn->w;
+    pattern_size4_btn->h = pattern_size3_btn->h;
+    pattern_size4_btn->x = pattern_size3_btn->x + step;
+    pattern_size4_btn->y = pattern_size3_btn->y;
+    pattern_size4_btn->level_off = 101;
+    pattern_size4_btn->clicked = &type_pattern_size4_clicked;
+    button_init_ui(pattern_size4_btn, "4x4", SIZE_SMALL);
+
+    pattern_size5_btn = mzalloc(sizeof(button));
+    pattern_size5_btn->w = pattern_size3_btn->w;
+    pattern_size5_btn->h = pattern_size3_btn->h;
+    pattern_size5_btn->x = pattern_size3_btn->x + step*2;
+    pattern_size5_btn->y = pattern_size3_btn->y;
+    pattern_size5_btn->level_off = 101;
+    pattern_size5_btn->clicked = &type_pattern_size5_clicked;
+    button_init_ui(pattern_size5_btn, "5x5", SIZE_SMALL);
+
+    pattern_size6_btn = mzalloc(sizeof(button));
+    pattern_size6_btn->w = pattern_size3_btn->w;
+    pattern_size6_btn->h = pattern_size3_btn->h;
+    pattern_size6_btn->x = pattern_size3_btn->x + step*3;
+    pattern_size6_btn->y = pattern_size3_btn->y;
+    pattern_size6_btn->level_off = 101;
+    pattern_size6_btn->clicked = &type_pattern_size6_clicked;
+    button_init_ui(pattern_size6_btn, "6x6", SIZE_SMALL);
+}
+
+static void type_pattern_buttons_destroy(void)
+{
+    if (pattern_size3_btn)
+        button_destroy(pattern_size3_btn);
+    if (pattern_size4_btn)
+        button_destroy(pattern_size4_btn);
+    if (pattern_size5_btn)
+        button_destroy(pattern_size5_btn);
+    if (pattern_size6_btn)
+        button_destroy(pattern_size6_btn);
+}
+
+static void type_pattern_init(size_t size)
+{
+    struct pwui_type_pattern_data *d = NULL;
+    size_t cx, cy;
+    int start_x;
+    int step;
+    int x;
+    int y;
+
+    if (size == 3) {
+        start_x = fb_width*0.2;
+    } else if (size == 4) {
+        start_x = fb_width*0.13;
+    } else if (size == 5) {
+        start_x = fb_width*0.1;
+    } else if (size == 6) {
+        start_x = fb_width*0.087;
+    } else {
+        ERROR("Pattern size must be 3 to 6!\n");
+        return;
+    }
+
+    pattern_size = size;
+
+    d = mzalloc(sizeof(struct pwui_type_pattern_data));
+    step = (fb_width - (start_x*2) - PWUI_DOT_R*pattern_size) / (pattern_size-1) + PWUI_DOT_R;
+    x = start_x;
+    y = fb_height/2 - fb_width/4;
+    if (size == 4)
+        y -= step * 0.3;
+    else if (size == 5)
+        y -= step * 0.5;
+    else if (size == 6)
+        y -= step * 0.75;
+
+    for(cy = 0; cy < size; ++cy)
     {
-        for(cx = 0; cx < 3; ++cx)
+        for(cx = 0; cx < size; ++cx)
         {
             fb_circle *c = fb_add_circle(x, y, PWUI_DOT_R, C_HIGHLIGHT_TEXT);
             list_add(&d->dots, c);
@@ -466,6 +590,7 @@ static void type_pattern_init(void)
 static void type_pattern_destroy(void)
 {
     struct pwui_type_pattern_data *d = pwui_type_data;
+    rm_touch_handler(type_pattern_touch_handler, d);
     list_clear(&d->dots, fb_remove_item);
     list_clear(&d->active_dots, fb_remove_item);
     list_clear(&d->complete_lines, fb_remove_item);
@@ -473,6 +598,7 @@ static void type_pattern_destroy(void)
     free(d);
 
     pwui_type_data = NULL;
+    pattern_size = 0;
 }
 
 static void init_ui(int pwtype)
@@ -500,7 +626,8 @@ static void init_ui(int pwtype)
             type_pass_init(pwtype);
             break;
         case CRYPT_TYPE_PATTERN:
-            type_pattern_init();
+            type_pattern_init(3);
+            type_pattern_buttons_init();
             break;
         default:
             t = fb_add_text(0, 0, C_TEXT, SIZE_NORMAL, "Error: unknown password type %d", pwtype);
@@ -533,6 +660,7 @@ static void destroy_ui(int pwtype)
             break;
         case CRYPT_TYPE_PATTERN:
             type_pattern_destroy();
+            type_pattern_buttons_destroy();
             break;
     }
 
