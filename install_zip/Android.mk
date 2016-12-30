@@ -56,7 +56,6 @@ $(MULTIROM_ZIP_TARGET): multirom trampoline bbootimg mrom_kexec_static mrom_adbd
 		cp -a $(TARGET_OUT_EXECUTABLES)/linker $(MULTIROM_INST_DIR)/multirom/enc/; \
 		cp -a $(install_zip_path)/prebuilt-installer/multirom/res/Roboto-Regular.ttf $(MULTIROM_INST_DIR)/multirom/enc/res/; \
 		\
-		cp -a $(TARGET_OUT_SHARED_LIBRARIES)/libcryptfslollipop.so $(MULTIROM_INST_DIR)/multirom/enc/; \
 		cp -a $(TARGET_OUT_SHARED_LIBRARIES)/libcrypto.so $(MULTIROM_INST_DIR)/multirom/enc/; \
 		cp -a $(TARGET_OUT_SHARED_LIBRARIES)/libc.so $(MULTIROM_INST_DIR)/multirom/enc/; \
 		cp -a $(TARGET_OUT_SHARED_LIBRARIES)/libcutils.so $(MULTIROM_INST_DIR)/multirom/enc/; \

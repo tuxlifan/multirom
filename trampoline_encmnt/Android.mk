@@ -5,21 +5,24 @@ LOCAL_MODULE:= trampoline_encmnt
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE_PATH := $(TARGET_ROOT_OUT)
 LOCAL_UNSTRIPPED_PATH := $(TARGET_ROOT_OUT_UNSTRIPPED)
-LOCAL_SHARED_LIBRARIES := libcryptfslollipop libcutils
+LOCAL_SHARED_LIBRARIES := libcutils libcrypto libhardware
 LOCAL_STATIC_LIBRARIES := libmultirom_static
-LOCAL_WHOLE_STATIC_LIBRARIES := libm libpng libz libft2_mrom_static
+LOCAL_WHOLE_STATIC_LIBRARIES := libm libpng libz libscrypt_static libft2_mrom_static
 
-ifneq ($(wildcard bootable/recovery/crypto/lollipop/cryptfs.h),)
-    mr_twrp_path := bootable/recovery
-else ifneq ($(wildcard bootable/recovery-twrp/crypto/lollipop/cryptfs.h),)
-    mr_twrp_path := bootable/recovery-twrp
-else
-    $(error Failed to find path to TWRP, which is required to build MultiROM with encryption support)
+LOCAL_C_INCLUDES += $(multirom_local_path) external/scrypt/lib/crypto external/boringssl/src/include
+
+ifeq ($(TARGET_HW_DISK_ENCRYPTION),true)
+    ifeq ($(TARGET_CRYPTFS_HW_PATH),)
+        LOCAL_C_INCLUDES += device/qcom/common/cryptfs_hw
+    else
+        LOCAL_C_INCLUDES += $(TARGET_CRYPTFS_HW_PATH)
+    endif
+    LOCAL_SHARED_LIBRARIES += libcryptfs_hw
+    LOCAL_CFLAGS += -DCONFIG_HW_DISK_ENCRYPTION
 endif
 
-LOCAL_C_INCLUDES += $(multirom_local_path) $(mr_twrp_path) $(mr_twrp_path)/crypto/scrypt/lib/crypto external/openssl/include external/boringssl/include
-
 LOCAL_SRC_FILES := \
+    cryptfs.c \
     encmnt.c \
     pw_ui.c \
     ../rom_quirks.c \

@@ -27,7 +27,7 @@
 #include "../lib/framebuffer.h"
 #include "../lib/util.h"
 
-#include "crypto/lollipop/cryptfs.h"
+#include "cryptfs.h"
 
 #include "pw_ui.h"
 #include "encmnt_defines.h"
@@ -85,12 +85,6 @@ static void print_help(char *argv[]) {
 
 static int handle_pwtype(int stdout_fd)
 {
-    if(cryptfs_check_footer() < 0)
-    {
-        ERROR("cryptfs_check_footer failed!");
-        return -1;
-    }
-
     int pwtype = cryptfs_get_password_type();
     if(pwtype < 0)
     {
@@ -105,19 +99,13 @@ static int handle_pwtype(int stdout_fd)
     return 0;
 }
 
-static int handle_decrypt(int stdout_fd, const char *password)
+static int handle_decrypt(int stdout_fd, char *password)
 {
     DIR *d;
     struct dirent *de;
     char buff[256];
     int res = -1;
-    static const char *default_password = "default_password";
-
-    if(cryptfs_check_footer() < 0)
-    {
-        ERROR("cryptfs_check_footer failed!");
-        return -1;
-    }
+    static char *default_password = "default_password";
 
     int pwtype = cryptfs_get_password_type();
     if(pwtype < 0)
@@ -186,9 +174,9 @@ static int handle_decrypt(int stdout_fd, const char *password)
 
 static int handle_remove(void)
 {
-    if(delete_crypto_blk_dev("userdata") < 0)
+    if(cryptfs_revert_ext_volume("userdata") < 0)
     {
-        ERROR("delete_crypto_blk_dev failed!");
+        ERROR("cryptfs_revert_ext_volume failed!");
         return -1;
     }
     return 0;

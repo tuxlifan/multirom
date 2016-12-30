@@ -35,7 +35,7 @@
 #include "../lib/containers.h"
 #include "../rom_quirks.h"
 
-#include "crypto/lollipop/cryptfs.h"
+#include "cryptfs.h"
 
 #define HEADER_HEIGHT (110*DPI_MUL)
 #define PWUI_DOT_R (15*DPI_MUL)
