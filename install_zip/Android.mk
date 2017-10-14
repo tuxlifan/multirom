@@ -54,24 +54,6 @@ $(MULTIROM_ZIP_TARGET): multirom trampoline bbootimg mrom_kexec_static mrom_adbd
 		mkdir -p $(MULTIROM_INST_DIR)/multirom/enc/res; \
 		cp -a $(TARGET_ROOT_OUT)/trampoline_encmnt $(MULTIROM_INST_DIR)/multirom/enc/; \
 		\
-		if [ "$(TARGET_IS_64_BIT)" == "true" ]; then \
-			cp -a $(TARGET_OUT_EXECUTABLES)/linker64 $(MULTIROM_INST_DIR)/multirom/enc/; \
-			echo "Relinking trampoline_encmnt /system/bin/linker64 to /mrom_enc/linker64"; \
-			sed -i "s|/system/bin/linker64\x0|/mrom_enc/linker64\x0\x0\x0|g" $(MULTIROM_INST_DIR)/multirom/enc/trampoline_encmnt; \
-			if [ -f "$(MULTIROM_INST_DIR)/multirom/enc/qseecomd" ]; then \
-				echo "Relinking qseecomd /system/bin/linker64 to /mrom_enc/linker64"; \
-				sed -i "s|/system/bin/linker64\x0|/mrom_enc/linker64\x0\x0\x0|g" $(MULTIROM_INST_DIR)/multirom/enc/qseecomd; \
-			fi; \
-		else \
-			cp -a $(TARGET_OUT_EXECUTABLES)/linker $(MULTIROM_INST_DIR)/multirom/enc/; \
-			echo "Relinking trampoline_encmnt /system/bin/linker to /mrom_enc/linker"; \
-			sed -i "s|/system/bin/linker\x0|/mrom_enc/linker\x0\x0\x0|g" $(MULTIROM_INST_DIR)/multirom/enc/trampoline_encmnt; \
-			if [ -f "$(MULTIROM_INST_DIR)/multirom/enc/qseecomd" ]; then \
-				echo "Relinking qseecomd /system/bin/linker to /mrom_enc/linker"; \
-				sed -i "s|/system/bin/linker\x0|/mrom_enc/linker\x0\x0\x0|g" $(MULTIROM_INST_DIR)/multirom/enc/qseecomd; \
-			fi; \
-		fi; \
-		\
 		cp -a $(install_zip_path)/prebuilt-installer/multirom/res/Roboto-Regular.ttf $(MULTIROM_INST_DIR)/multirom/enc/res/; \
 		\
 		cp -a $(TARGET_OUT_SHARED_LIBRARIES)/libcrypto.so $(MULTIROM_INST_DIR)/multirom/enc/; \
@@ -86,7 +68,25 @@ $(MULTIROM_ZIP_TARGET): multirom trampoline bbootimg mrom_kexec_static mrom_adbd
 		if $(MR_ENCRYPTION_FAKE_PROPERTIES); then \
 			cp -a $(TARGET_OUT_SHARED_LIBRARIES)/libmultirom_fake_properties.so $(MULTIROM_INST_DIR)/multirom/enc/; \
 		fi; \
-		if [ -n "$(MR_ENCRYPTION_SETUP_SCRIPT)" ]; then sh "$(ANDROID_BUILD_TOP)/$(MR_ENCRYPTION_SETUP_SCRIPT)" "$(ANDROID_BUILD_TOP)" "$(MULTIROM_INST_DIR)/multirom/enc"; fi; \
+		if [ -n "$(MR_ENCRYPTION_SETUP_SCRIPT)" ]; then \
+			sh "$(ANDROID_BUILD_TOP)/$(MR_ENCRYPTION_SETUP_SCRIPT)" "$(ANDROID_BUILD_TOP)" "$(MULTIROM_INST_DIR)/multirom/enc"; \
+		fi; \
+		\
+		if [ "$(TARGET_IS_64_BIT)" == "true" ]; then \
+			echo "Relinking trampoline_encmnt /system/bin/linker64 to /mrom_enc/linker64"; \
+			sed -i "s|/system/bin/linker64\x0|/mrom_enc/linker64\x0\x0\x0|g" $(MULTIROM_INST_DIR)/multirom/enc/trampoline_encmnt; \
+			if [ -f "$(MULTIROM_INST_DIR)/multirom/enc/qseecomd" ]; then \
+				echo "Relinking qseecomd /system/bin/linker64 to /mrom_enc/linker64"; \
+				sed -i "s|/system/bin/linker64\x0|/mrom_enc/linker64\x0\x0\x0|g" $(MULTIROM_INST_DIR)/multirom/enc/qseecomd; \
+			fi; \
+		else \
+			echo "Relinking trampoline_encmnt /system/bin/linker to /mrom_enc/linker"; \
+			sed -i "s|/system/bin/linker\x0|/mrom_enc/linker\x0\x0\x0|g" $(MULTIROM_INST_DIR)/multirom/enc/trampoline_encmnt; \
+			if [ -f "$(MULTIROM_INST_DIR)/multirom/enc/qseecomd" ]; then \
+				echo "Relinking qseecomd /system/bin/linker to /mrom_enc/linker"; \
+				sed -i "s|/system/bin/linker\x0|/mrom_enc/linker\x0\x0\x0|g" $(MULTIROM_INST_DIR)/multirom/enc/qseecomd; \
+			fi; \
+		fi; \
 	fi
 
 	mkdir $(MULTIROM_INST_DIR)/multirom/infos
