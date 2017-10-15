@@ -11,6 +11,8 @@ else
         base="/data/media/multirom"
     fi
 
+    rm -rf "$base/enc"
+
     mkdir "$base"
     chown root:root "$base"
     chmod 770 "$base"
