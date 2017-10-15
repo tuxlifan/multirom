@@ -11,8 +11,6 @@ else
         base="/data/media/multirom"
     fi
 
-    rm -rf "$base/enc"
-
     mkdir "$base"
     chown root:root "$base"
     chmod 770 "$base"
@@ -24,6 +22,8 @@ else
     touch "$base/.nomedia"
     chown media_rw:media_rw "$base/.nomedia"
 fi
+
+rm -rf "$base/enc"
 
 rm "$base/boot.img-ubuntu"*
 rm "$base/infos/"*
